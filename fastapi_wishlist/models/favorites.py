@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import func, Integer, ForeignKey
+from sqlalchemy import ForeignKey, Integer, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fastapi_wishlist.models import Base
@@ -15,9 +15,7 @@ class Favorite(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    product_id: Mapped[int] = relationship(
-        ForeignKey('products.id')
-    )
+    product_id: Mapped[int] = mapped_column(ForeignKey('products.id'))
     product: Mapped['Product'] = relationship(
         'Product',
         back_populates='favorites',

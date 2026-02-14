@@ -181,3 +181,5 @@ pyrightconfig.json
 *.db
 
 .DS_Store
+
+.vccode/

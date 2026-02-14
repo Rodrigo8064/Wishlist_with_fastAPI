@@ -30,7 +30,7 @@ class ProductSchema(BaseModel):
         if v <= 0:
             raise ValueError('Preço deve ser maior que zero')
         return v
-    
+
 
 class ProductUpdateSchema(BaseModel):
     title: Optional[str] = None
@@ -64,11 +64,10 @@ class ProductPublicSchema(BaseModel):
     title: str
     price: Decimal
     description: Optional[str] = None
-    image: Optional[str] = None
     brand: str
-    reviews: List[ReviewProductSchema]
+    reviews: List[ReviewProductSchema] = []
     created_at: datetime
-    update_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
 
 
 class ProductListSchema(BaseModel):

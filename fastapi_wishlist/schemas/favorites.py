@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, ConfigDict
 
 from fastapi_wishlist.schemas.products import ProductPublicSchema
@@ -12,3 +14,7 @@ class FavoritePublicSchema(BaseModel):
 
     id: int
     product: ProductPublicSchema
+
+
+class FavoriteListSchema(BaseModel):
+    favorites: List[FavoritePublicSchema]
