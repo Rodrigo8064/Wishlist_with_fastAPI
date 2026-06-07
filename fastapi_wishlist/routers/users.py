@@ -26,6 +26,7 @@ router = APIRouter()
 async def create_user(
     user: UserSchema,
     db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     username_exists = await db.scalar(
         select(exists().where(User.username == user.username))
@@ -71,6 +72,7 @@ async def list_users(
         None, description='Buscar por username ou email'
     ),
     db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     query = select(User)
 
@@ -98,6 +100,7 @@ async def list_users(
 async def get_user(
     user_id: int,
     db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     user = await db.get(User, user_id)
 

@@ -4,13 +4,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: api-wishlist
     depends_on:
       migrations:
         condition: service_completed_successfully
     env_file:
       - .env
-    ports:
-      - "8000:8000"
+    networks:
+      - portfolio-net
 
   migrations:
     build:
@@ -22,6 +23,8 @@ services:
     depends_on:
       db:
         condition: service_started
+    networks:
+      - portfolio-net
 
   db:
     image: postgres:17.6-trixie
@@ -31,6 +34,13 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - data:/var/lib/postgresql/data
+    networks:
+      - portfolio-net
 
 volumes:
   data:
+
+networks:
+  portfolio-net:
+    name: portfolio-net
+    external: true
