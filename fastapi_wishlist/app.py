@@ -3,7 +3,6 @@ from fastapi import FastAPI, status
 from fastapi_wishlist.routers import auth, favorites, products, reviews, users
 
 app = FastAPI(
-    root_path="/wishlist",
     title="Wishlist API",
     description="""
 API de lista de desejos para e-commerce.
@@ -26,6 +25,10 @@ Use as credenciais abaixo para autenticar:
     """,
     version="1.0.0",
 )
+
+@app.get('/health_check', status_code=status.HTTP_200_OK)
+def health_check():
+    return {'status': 'ok'}
 
 app.include_router(
     router=auth.router,
@@ -56,8 +59,3 @@ app.include_router(
     prefix='/api/favorites',
     tags=['favorites'],
 )
-
-
-@app.get('/health_check', status_code=status.HTTP_200_OK)
-def health_check():
-    return {'status': 'ok'}
