@@ -26,4 +26,6 @@ RUN poetry install \
 
 COPY --chown=${USERNAME}:${USERNAME} . .
 
-CMD ["poetry", "run", "gunicorn", "fastapi_wishlist.app:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--workers", "2"]
+RUN chmod +x entrypoint.sh
+EXPOSE 8001
+CMD ["./entrypoint.sh"]
