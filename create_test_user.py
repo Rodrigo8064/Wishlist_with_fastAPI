@@ -1,8 +1,11 @@
 import asyncio
+
 from sqlalchemy import select
+
 from fastapi_wishlist.core.database import get_session
 from fastapi_wishlist.core.security import get_password_hash
 from fastapi_wishlist.models.users import User
+
 
 async def main():
     async for db in get_session():
@@ -21,5 +24,6 @@ async def main():
         db.add(user)
         await db.commit()
         print('Usuário de teste criado com sucesso!')
+
 
 asyncio.run(main())
