@@ -47,7 +47,7 @@ async def user_data():
     return {
         'username': 'testuser',
         'email': 'test@example.com',
-        'passwaord': 'secret123',
+        'password': 'secret123',
     }
 
 
