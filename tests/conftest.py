@@ -10,7 +10,8 @@ from fastapi_wishlist.core.security import (
     get_password_hash,
 )
 from fastapi_wishlist.models import Base
-from fastapi_wishlist.models.products import Favorite, Product, Review
+from fastapi_wishlist.models.favorites import Favorite
+from fastapi_wishlist.models.products import Product, Review
 from fastapi_wishlist.models.users import User
 
 
@@ -51,7 +52,7 @@ async def user_data():
 
 
 @pytest_asyncio.fixture
-async def second_data(session):
+async def second_user(session):
     hashed_password = get_password_hash('password123')
     db_user = User(
         username='seconduser',
@@ -124,3 +125,30 @@ async def second_product(session):
     await session.commit()
     await session.refresh(db_product)
     return db_product
+
+
+@pytest_asyncio.fixture
+async def review(session, product):
+    db_review = Review(
+        stars='5',
+        comment='muito bom',
+        product_id='product.id',
+    )
+
+    session.add(db_review)
+    await session.commit()
+    await session.refresh(db_review)
+    return db_review
+
+
+@pytest_asyncio.fixture
+async def favorite(session, product, user):
+    db_favorite = Favorite(
+        product_id=product.id,
+        owner_id=user.id,
+    )
+
+    session.add(db_favorite)
+    await session.commit()
+    await session.refresh(db_favorite)
+    return db_favorite
