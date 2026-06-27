@@ -79,6 +79,11 @@ ignore = ['PLR2004', 'PLR0917', 'PLR0913']
 preview = true
 quote-style = 'single'
 
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = '-p no:warnings'
+asyncio_default_fixture_loop_scope = 'function'
+
 [tool.taskipy.tasks]
 lint = 'ruff check'
 pre_format = 'ruff check --fix'
@@ -87,3 +92,6 @@ run = 'fastapi dev fastapi_wishlist/app.py'
 pre_test = 'task lint'
 test = 'pytest -s -x --cov=fastapi_wishlist -vv'
 post_test = 'coverage html'
+
+[tool. coverage.run]
+concurrency = ["thread", "greenlet"]
