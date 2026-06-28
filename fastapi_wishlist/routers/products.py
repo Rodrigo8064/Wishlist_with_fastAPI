@@ -129,7 +129,7 @@ async def update_product(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Carro não encontrado',
+            detail='Produto não encontrado',
         )
 
     update_data = product_update.model_dump(exclude_unset=True)
@@ -151,7 +151,7 @@ async def update_product(
 
 
 @router.delete(
-    path='/(product_id)',
+    path='/{product_id}',
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Deletar produto',
 )
@@ -165,7 +165,7 @@ async def delete_product(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Carro não encontrado',
+            detail='Produto não encontrado',
         )
 
     await db.delete(product)

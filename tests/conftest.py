@@ -132,7 +132,7 @@ async def review(session, product):
     db_review = Review(
         stars='5',
         comment='muito bom',
-        product_id='product.id',
+        product_id=product.id,
     )
 
     session.add(db_review)
