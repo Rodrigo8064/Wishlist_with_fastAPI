@@ -35,7 +35,7 @@ async def create_favorite(
     if not product_exists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='produto não encontrado',
+            detail='Produto não encontrado',
         )
 
     query_check = select(Favorite).where(

@@ -11,7 +11,7 @@ def test_create_user_without_permission(client):
     assert response.status_code == 401
 
 
-def test_create_user(client, user, auth_headers):
+def test_create_user(client, auth_headers):
     response = client.post(
         'api/users/',
         headers=auth_headers,
@@ -59,6 +59,38 @@ def test_create_duplicate_email(client, auth_headers):
 
     assert response.status_code == 400
     assert response.json() == {'detail': 'Email já está em uso'}
+
+
+def test_create_user_username_too_short(client, auth_headers):
+    response = client.post(
+        'api/users/',
+        headers=auth_headers,
+        json={
+            'username': 'ab',
+            'email': 'test@example.com',
+            'password': 'password123',
+        },
+    )
+
+    assert response.status_code == 422
+    error_data = response.json()
+    assert 'Username deve ter pelo menos 3 caracteres' in str(error_data)
+
+
+def test_create_user_password_too_short(client, auth_headers):
+    response = client.post(
+        'api/users/',
+        headers=auth_headers,
+        json={
+            'username': 'testuser',
+            'email': 'test@example.com',
+            'password': '12345',
+        },
+    )
+
+    assert response.status_code == 422
+    error_data = response.json()
+    assert 'Senha deve ter pelo menos 6 caracteres' in str(error_data)
 
 
 def test_list_user(client, auth_headers):
@@ -167,6 +199,34 @@ def test_update_user_same_email(client, user, second_user, auth_headers):
 
     assert response.status_code == 400
     assert response.json() == {'detail': 'Email já está em uso'}
+
+
+def test_update_user_username_too_short(client, auth_headers, user):
+    response = client.put(
+        f'api/users/{user.id}',
+        headers=auth_headers,
+        json={
+            'username': 'ab',
+        },
+    )
+
+    assert response.status_code == 422
+    error_data = response.json()
+    assert 'Username deve ter pelo menos 3 caracteres' in str(error_data)
+
+
+def test_update_user_password_too_short(client, auth_headers, user):
+    response = client.put(
+        f'api/users/{user.id}',
+        headers=auth_headers,
+        json={
+            'password': '12345',
+        },
+    )
+
+    assert response.status_code == 422
+    error_data = response.json()
+    assert 'Senha deve ter pelo menos 6 caracteres' in str(error_data)
 
 
 def test_delete_user(client, second_user, auth_headers):

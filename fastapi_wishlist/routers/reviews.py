@@ -86,7 +86,7 @@ async def update_review(
 
 
 @router.delete(
-    path='/(review_id)',
+    path='/{review_id}',
     status_code=status.HTTP_204_NO_CONTENT,
     summary='Deletar review',
 )
@@ -100,7 +100,7 @@ async def delete_review(
     if not review:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Carro não encontrado',
+            detail='Review não encontrado',
         )
 
     await db.delete(review)
