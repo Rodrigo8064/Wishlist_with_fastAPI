@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from testcontainers.postgres import PostgresContainer
 
 from fastapi_wishlist.app import app
 from fastapi_wishlist.core.database import get_session
@@ -15,11 +16,17 @@ from fastapi_wishlist.models.products import Product, Review
 from fastapi_wishlist.models.users import User
 
 
+@pytest.fixture(scope='session')
+def engine():
+    with PostgresContainer('postgres:17', driver='psycopg') as postgres:
+        _engine = create_async_engine(
+            postgres.get_connection_url(),
+        )
+        yield _engine
+
+
 @pytest_asyncio.fixture
-async def session():
-    engine = create_async_engine(
-        url='sqlite+aiosqlite:///:memory:',
-    )
+async def session(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
