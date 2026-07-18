@@ -5,7 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name:  Copia os arquivos do repositório
+      - name: Copia os arquivos do repositório
         uses: actions/checkout@v6
 
       - name: Instalar o python
