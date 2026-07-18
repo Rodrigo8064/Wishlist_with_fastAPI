@@ -4,6 +4,13 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
+      JWT_EXPIRATION_MINUTES: ${{ secrets.JWT_EXPIRATION_MINUTES}}
+
     steps:
       - name: Copia os arquivos do repositório
         uses: actions/checkout@v6
