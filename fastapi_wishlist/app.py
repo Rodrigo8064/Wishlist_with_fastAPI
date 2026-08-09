@@ -1,6 +1,8 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 
 from fastapi_wishlist.routers import auth, favorites, products, reviews, users
+from fastapi_wishlist.service.helpers import NotFoundError
 
 app = FastAPI(
     title='Wishlist API',
@@ -30,6 +32,11 @@ Use as credenciais abaixo para autenticar:
 @app.get('/health_check', status_code=status.HTTP_200_OK)
 def health_check():
     return {'status': 'ok'}
+
+
+@app.exception_handler(NotFoundError)
+async def not_found_handler(request: Request, exc: NotFoundError):
+    return JSONResponse(status_code=404, content={'detail': str(exc)})
 
 
 app.include_router(
