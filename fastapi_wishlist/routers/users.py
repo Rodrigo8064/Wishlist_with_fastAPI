@@ -1,17 +1,24 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_wishlist.core.database import get_session
-from fastapi_wishlist.core.security import get_current_user, get_password_hash
+from fastapi_wishlist.core.security import get_current_user
 from fastapi_wishlist.models.users import User
 from fastapi_wishlist.schemas.users import (
     UserListPublicSchema,
     UserPublicSchema,
     UserSchema,
     UserUpdateSchema,
+)
+from fastapi_wishlist.service.users import (
+    UserConflictError,
+    create_user_service,
+    delete_user_service,
+    get_user_service,
+    list_user_service,
+    update_user_service,
 )
 
 router = APIRouter()
@@ -28,35 +35,14 @@ async def create_user(
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    username_exists = await db.scalar(
-        select(exists().where(User.username == user.username))
-    )
-    if username_exists:
+    try:
+        db_user = await create_user_service(db=db, user_data=user)
+        return db_user
+    except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Username já está em uso',
+            detail=str(err),
         )
-
-    email_exists = await db.scalar(
-        select(exists().where(User.email == user.email))
-    )
-    if email_exists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Email já está em uso',
-        )
-
-    db_user = User(
-        username=user.username,
-        email=user.email,
-        password=get_password_hash(user.password),
-    )
-
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-
-    return db_user
 
 
 @router.get(
@@ -74,19 +60,9 @@ async def list_users(
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    query = select(User)
-
-    if search:
-        search_filter = f'%{search}%'
-        query = query.where(
-            (User.username.ilike(search_filter))
-            | (User.email.ilike(search_filter))
-        )
-
-    query = query.offset(offset).limit(limit)
-
-    result = await db.execute(query)
-    users = result.scalars().all()
+    users = await list_user_service(
+        db=db, search=search, offset=offset, limit=limit
+    )
 
     return {'users': users, 'offset': offset, 'limit': limit}
 
@@ -102,15 +78,7 @@ async def get_user(
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    user = await db.get(User, user_id)
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Usuário não encontrado',
-        )
-
-    return user
+    return await get_user_service(db=db, user_id=user_id)
 
 
 @router.put(
@@ -125,55 +93,16 @@ async def update_user(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    user = await db.get(User, user_id)
-
-    if not user:
+    try:
+        updated_user = await update_user_service(
+            db=db, user_id=user_id, user_update=user_update
+        )
+        return updated_user
+    except UserConflictError as err:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Usuário não encontrado',
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err),
         )
-
-    update_data = user_update.model_dump(exclude_unset=True)
-
-    if 'username' in update_data and update_data['username'] != user.username:
-        username_exists = await db.scalar(
-            select(
-                exists().where(
-                    (User.username == update_data['username'])
-                    & (User.id != user_id)
-                )
-            )
-        )
-        if username_exists:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Username já está em uso',
-            )
-
-    if 'email' in update_data and update_data['email'] != user.email:
-        email_exists = await db.scalar(
-            select(
-                exists().where(
-                    (User.email == update_data['email']) & (User.id != user_id)
-                )
-            )
-        )
-        if email_exists:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail='Email já está em uso',
-            )
-
-    if 'password' in update_data:
-        update_data['password'] = get_password_hash(update_data['password'])
-
-    for field, value in update_data.items():
-        setattr(user, field, value)
-
-    await db.commit()
-    await db.refresh(user)
-
-    return user
 
 
 @router.delete(
@@ -186,13 +115,4 @@ async def delete_user(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    user = await db.get(User, user_id)
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Usuário não encontrado',
-        )
-
-    await db.delete(user)
-    await db.commit()
+    await delete_user_service(db=db, user_id=user_id)
