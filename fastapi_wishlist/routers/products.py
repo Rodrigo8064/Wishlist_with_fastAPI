@@ -1,19 +1,23 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from fastapi_wishlist.core.database import get_session
 from fastapi_wishlist.core.security import get_current_user
-from fastapi_wishlist.models.products import Product
 from fastapi_wishlist.models.users import User
 from fastapi_wishlist.schemas.products import (
     ProductListSchema,
     ProductPublicSchema,
     ProductSchema,
     ProductUpdateSchema,
+)
+from fastapi_wishlist.service.product import (
+    create_product_service,
+    delete_product_service,
+    get_product_service,
+    list_product_service,
+    update_product_service,
 )
 
 router = APIRouter()
@@ -30,23 +34,8 @@ async def create_product(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    new_product = Product(
-        title=product.title,
-        price=product.price,
-        description=product.description,
-        brand=product.brand,
-    )
-    db.add(new_product)
-    await db.commit()
-    await db.refresh(new_product)
-
-    result = await db.execute(
-        select(Product)
-        .options(selectinload(Product.reviews))
-        .where(Product.id == new_product.id)
-    )
-    product_with_relation = result.scalar_one()
-    return product_with_relation
+    new_product = await create_product_service(db, product)
+    return new_product
 
 
 @router.get(
@@ -64,23 +53,7 @@ async def list_products(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    query = select(Product).options(selectinload(Product.reviews))
-
-    if search:
-        search_filter = f'%{search}%'
-        query = query.where(
-            (Product.title.ilike(search_filter))
-            | (Product.brand.ilike(search_filter))
-        )
-
-    if min_price is not None:
-        query = query.where(Product.price >= min_price)
-
-    if max_price is not None:
-        query = query.where(Product.price <= max_price)
-
-    result = await db.execute(query)
-    products = result.scalars().all()
+    products = await list_product_service(db, search, min_price, max_price)
 
     return {'products': products}
 
@@ -96,20 +69,14 @@ async def get_product(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    result = await db.execute(
-        select(Product)
-        .options(selectinload(Product.reviews))
-        .where(Product.id == product_id)
-    )
-    product = result.scalar_one_or_none()
-
-    if not product:
+    try:
+        product = await get_product_service(db, product_id)
+        return product
+    except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='produto não encontrado',
+            detail=str(err),
         )
-
-    return product
 
 
 @router.put(
@@ -124,30 +91,9 @@ async def update_product(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    product = await db.get(Product, product_id)
+    product = await update_product_service(db, product_id, product_update)
 
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Produto não encontrado',
-        )
-
-    update_data = product_update.model_dump(exclude_unset=True)
-
-    for field, value in update_data.items():
-        setattr(product, field, value)
-
-    await db.commit()
-    await db.refresh(product)
-
-    result = await db.execute(
-        select(Product)
-        .options(selectinload(Product.reviews))
-        .where(Product.id == product_id)
-    )
-    product_with_relation = result.scalar_one()
-
-    return product_with_relation
+    return product
 
 
 @router.delete(
@@ -160,13 +106,4 @@ async def delete_product(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    product = await db.get(Product, product_id)
-
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Produto não encontrado',
-        )
-
-    await db.delete(product)
-    await db.commit()
+    await delete_product_service(db, product_id)
