@@ -14,7 +14,7 @@ echo "  Iniciando Gunicorn..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 exec poetry run gunicorn fastapi_wishlist.app:app \
-    --bind 0.0.0.0:8001 \
+    --bind 0.0.0.0:8000 \
     -k uvicorn.workers.UvicornWorker \
     --workers 1 \
     --access-logfile - \

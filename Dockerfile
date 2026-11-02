@@ -18,7 +18,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 WORKDIR /home/${USERNAME}
 
-COPY --chown=w${USERNAME}:${USERNAME} pyproject.toml poetry.lock ./
+COPY --chown=${USERNAME}:${USERNAME} pyproject.toml poetry.lock ./
 RUN poetry install \
       --no-root \
       --no-ansi \
@@ -27,5 +27,5 @@ RUN poetry install \
 COPY --chown=${USERNAME}:${USERNAME} . .
 
 RUN chmod +x entrypoint.sh
-EXPOSE 8001
+EXPOSE 8000
 CMD ["./entrypoint.sh"]
