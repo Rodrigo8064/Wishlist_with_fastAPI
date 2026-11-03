@@ -6,8 +6,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Iniciando aplicação..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-echo "► Aplicando migrations..."
-poetry run alembic upgrade head
+if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
+  echo "► Aplicando migrations..."
+  poetry run alembic upgrade head
+else
+  echo "► Migrations desativadas (RUN_MIGRATIONS=false)"
+fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Iniciando Gunicorn..."
